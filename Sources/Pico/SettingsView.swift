@@ -3,6 +3,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
+    @State private var accessibilityTrusted = SelectionService.isAccessibilityTrusted()
+    // Re-check while the window is open so the label updates as soon as the user flips the toggle.
+    private let accessibilityPoll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Form {
@@ -61,11 +64,21 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 HStack {
-                    Text(SelectionService.isAccessibilityTrusted() ? "Accessibility: allowed" : "Accessibility: not allowed")
+                    Label(accessibilityTrusted ? "Accessibility: allowed" : "Accessibility: not allowed",
+                          systemImage: accessibilityTrusted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(accessibilityTrusted ? .green : .orange)
                     Spacer()
-                    Button("Open System Settings") { SelectionService.openAccessibilitySettings() }
+                    if !accessibilityTrusted {
+                        Button("Open System Settings") {
+                            SelectionService.requestAccessibility()
+                            SelectionService.openAccessibilitySettings()
+                        }
+                    }
                 }
-                Text("Pico needs Accessibility access to read the text you select and to replace it.")
+                .onReceive(accessibilityPoll) { _ in accessibilityTrusted = SelectionService.isAccessibilityTrusted() }
+                Text(accessibilityTrusted
+                     ? "Pico can read the text you select and replace it."
+                     : "Turn on Pico under Privacy & Security → Accessibility. If it is already on, toggle it off and on again (needed after each rebuild).")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
