@@ -3,6 +3,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
+    // Read the Keychain once; reading it inside `body` would prompt on every redraw.
+    @State private var storedKey = Keychain.apiKey() ?? ""
     @State private var apiKey = Keychain.apiKey() ?? ""
     @State private var saved = false
 
@@ -13,7 +15,7 @@ struct SettingsView: View {
                     .onSubmit(saveKey)
                 HStack {
                     Button("Save") { saveKey() }
-                        .disabled(apiKey.trimmingCharacters(in: .whitespaces) == (Keychain.apiKey() ?? ""))
+                        .disabled(apiKey.trimmingCharacters(in: .whitespaces) == storedKey)
                     if saved { Text("Saved to Keychain").foregroundStyle(.secondary) }
                     Spacer()
                     Link("Get a key", destination: URL(string: "https://platform.claude.com/settings/keys")!)
@@ -78,6 +80,7 @@ struct SettingsView: View {
 
     private func saveKey() {
         Keychain.setAPIKey(apiKey)
+        storedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         saved = true
     }
 

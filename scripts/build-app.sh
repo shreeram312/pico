@@ -25,8 +25,15 @@ cp "$BIN" "$APP/Contents/MacOS/Pico"
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD_NUMBER/" Resources/Info.plist > "$APP/Contents/Info.plist"
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 
-# Ad-hoc signature: enough for Apple Silicon to run the app. Replace `-` with a Developer ID
-# identity (and notarize) once there is an Apple Developer account.
-codesign --force --sign "${CODESIGN_IDENTITY:--}" --options runtime --timestamp=none "$APP"
+# Signing identity, in order: $CODESIGN_IDENTITY, the local "Pico Dev" certificate
+# (scripts/dev-cert.sh), else ad-hoc. Ad-hoc is enough to run, but its signature changes every
+# build, so macOS re-asks for Accessibility and the keychain password. Use a Developer ID identity
+# (and notarize) once there is an Apple Developer account.
+IDENTITY="${CODESIGN_IDENTITY:-}"
+if [[ -z "$IDENTITY" ]] && security find-identity -v -p codesigning 2>/dev/null | grep -q "Pico Dev"; then
+  IDENTITY="Pico Dev"
+fi
+codesign --force --sign "${IDENTITY:--}" --options runtime --timestamp=none "$APP"
+echo "Signed with: ${IDENTITY:-ad-hoc}"
 
 echo "Built $APP (version $VERSION, build $BUILD_NUMBER)"

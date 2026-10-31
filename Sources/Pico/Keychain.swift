@@ -33,12 +33,14 @@ enum Keychain {
             SecItemDelete(query as CFDictionary)
             return
         }
-        let data = Data(trimmed.utf8)
-        let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        if status == errSecItemNotFound {
-            var insert = query
-            insert[kSecValueData as String] = data
-            SecItemAdd(insert as CFDictionary, nil)
+        // Delete + add rather than update: a fresh item is owned by the current build of the app,
+        // so a rebuilt (re-signed) Pico can read it without macOS asking for the keychain password.
+        SecItemDelete(query as CFDictionary)
+        var insert = query
+        insert[kSecValueData as String] = Data(trimmed.utf8)
+        let status = SecItemAdd(insert as CFDictionary, nil)
+        if status != errSecSuccess {
+            Log.app.error("Keychain save failed: OSStatus \(status)")
         }
     }
 }
