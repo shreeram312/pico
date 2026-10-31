@@ -31,11 +31,14 @@ enum SelectionService {
     // MARK: Read
 
     static func capture() async -> Selection {
+        let trusted = isAccessibilityTrusted()
         let element = focusedElement()
         if let element, let text = selectedText(of: element), !text.isEmpty {
+            Log.app.notice("Selection via Accessibility (\(text.count) chars)")
             return Selection(text: text, element: element)
         }
         let text = await copyViaKeyboard() ?? ""
+        Log.app.notice("Selection via ⌘C fallback: \(text.count) chars; trusted: \(trusted); focused element: \(element != nil)")
         return Selection(text: text, element: element)
     }
 
@@ -60,7 +63,10 @@ enum SelectionService {
         let changeCount = pasteboard.changeCount
 
         postKey(keyCode: CGKeyCode(kVK_ANSI_C), flags: .maskCommand)
-        try? await Task.sleep(for: .milliseconds(150))
+        // Electron apps can take a few hundred ms to service the copy; poll instead of a fixed wait.
+        for _ in 0..<12 where pasteboard.changeCount == changeCount {
+            try? await Task.sleep(for: .milliseconds(50))
+        }
 
         guard pasteboard.changeCount != changeCount else { return nil }
         let copied = pasteboard.string(forType: .string)

@@ -6,6 +6,8 @@ struct PopupView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             switch model.phase {
+            case .needsPermission:
+                needsPermission
             case .noSelection:
                 noSelection
             case .choosing:
@@ -25,6 +27,23 @@ struct PopupView: View {
         .padding(14)
         .frame(width: 360)
         .background(.regularMaterial)
+    }
+
+    private var needsPermission: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "hand.raised").font(.title2).foregroundStyle(.orange)
+            Text("Pico needs Accessibility permission to read the text you select.")
+                .font(.callout)
+                .multilineTextAlignment(.center)
+            Text("System Settings → Privacy & Security → Accessibility → turn on Pico.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button("Open System Settings") { model.openAccessibilitySettings() }
+                .keyboardShortcut(.defaultAction)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
     }
 
     private var noSelection: some View {

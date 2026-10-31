@@ -4,7 +4,7 @@ import SwiftUI
 /// Drives the popup: captures the selection, runs actions, replaces text.
 @MainActor
 final class PopupModel: ObservableObject {
-    enum Phase { case noSelection, choosing, running, done }
+    enum Phase { case needsPermission, noSelection, choosing, running, done }
 
     @Published var phase: Phase = .noSelection
     @Published var text = ""
@@ -25,7 +25,17 @@ final class PopupModel: ObservableObject {
         result = ""
         error = nil
         action = nil
-        phase = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .noSelection : .choosing
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            phase = SelectionService.isAccessibilityTrusted() ? .noSelection : .needsPermission
+        } else {
+            phase = .choosing
+        }
+    }
+
+    func openAccessibilitySettings() {
+        SelectionService.requestAccessibility()
+        SelectionService.openAccessibilitySettings()
+        onClose()
     }
 
     func run(_ action: Action) {
@@ -133,7 +143,7 @@ final class PopupController: NSObject, NSWindowDelegate {
 
     func windowDidResignKey(_ notification: Notification) {
         // Clicking back into the target app dismisses the popup, unless a result is waiting.
-        if model.phase == .noSelection || model.phase == .choosing { close() }
+        if [.needsPermission, .noSelection, .choosing].contains(model.phase) { close() }
     }
 
     /// Place the panel just below the mouse pointer, kept inside the screen.
