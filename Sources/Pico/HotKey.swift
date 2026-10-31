@@ -26,7 +26,13 @@ final class HotKey {
         )
 
         let hotKeyID = EventHotKeyID(signature: OSType(0x5049_434F), id: 1) // "PICO"
-        RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        let status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        if status != noErr {
+            // Usually another app (Raycast, Alfred…) already owns this combination.
+            Log.app.error("Could not register hotkey (keyCode \(keyCode), modifiers \(modifiers)): OSStatus \(status)")
+        } else {
+            Log.app.notice("Registered hotkey keyCode \(keyCode), modifiers \(modifiers)")
+        }
     }
 
     deinit {

@@ -1,3 +1,4 @@
+import Carbon
 import Foundation
 import ServiceManagement
 
@@ -18,6 +19,39 @@ final class Settings: ObservableObject {
         ("claude-haiku-5-5", "Haiku 5.5 — fastest, cheapest"),
     ]
 
+    /// A fixed set of shortcuts to choose from (a full key recorder is on the roadmap).
+    /// Raycast and Alfred both default to ⌥ Space, so Pico's default avoids it.
+    enum HotkeyPreset: String, CaseIterable, Identifiable {
+        case controlOptionSpace, optionSpace, commandShiftSpace, controlOptionP, commandShiftE
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .controlOptionSpace: return "⌃⌥ Space"
+            case .optionSpace: return "⌥ Space"
+            case .commandShiftSpace: return "⌘⇧ Space"
+            case .controlOptionP: return "⌃⌥ P"
+            case .commandShiftE: return "⌘⇧ E"
+            }
+        }
+
+        var keyCode: UInt32 {
+            switch self {
+            case .controlOptionSpace, .optionSpace, .commandShiftSpace: return UInt32(kVK_Space)
+            case .controlOptionP: return UInt32(kVK_ANSI_P)
+            case .commandShiftE: return UInt32(kVK_ANSI_E)
+            }
+        }
+
+        var modifiers: UInt32 {
+            switch self {
+            case .controlOptionSpace, .controlOptionP: return UInt32(controlKey | optionKey)
+            case .optionSpace: return UInt32(optionKey)
+            case .commandShiftSpace, .commandShiftE: return UInt32(cmdKey | shiftKey)
+            }
+        }
+    }
+
     enum Script: String, CaseIterable, Identifiable {
         case native, roman
         var id: String { rawValue }
@@ -32,6 +66,7 @@ final class Settings: ObservableObject {
     @Published var language: String { didSet { defaults.set(language, forKey: "language") } }
     @Published var script: Script { didSet { defaults.set(script.rawValue, forKey: "script") } }
     @Published var model: String { didSet { defaults.set(model, forKey: "model") } }
+    @Published var hotkey: HotkeyPreset { didSet { defaults.set(hotkey.rawValue, forKey: "hotkey") } }
     @Published var launchAtLogin: Bool {
         didSet {
             do {
@@ -48,6 +83,7 @@ final class Settings: ObservableObject {
         language = defaults.string(forKey: "language") ?? "Hindi"
         script = Script(rawValue: defaults.string(forKey: "script") ?? "") ?? .native
         model = defaults.string(forKey: "model") ?? Self.models[0].id
+        hotkey = HotkeyPreset(rawValue: defaults.string(forKey: "hotkey") ?? "") ?? .controlOptionSpace
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 

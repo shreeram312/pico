@@ -1,20 +1,22 @@
 import AppKit
-import Carbon
+import Combine
 import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var hotKey: HotKey?
+    private var hotkeyObserver: AnyCancellable?
     private let popup = PopupController()
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
-        // ⌥ Space. Hotkey customisation is on the roadmap; see Settings.
-        hotKey = HotKey(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey)) { [weak self] in
-            self?.trigger()
-        }
+        registerHotkey(Settings.shared.hotkey)
+        hotkeyObserver = Settings.shared.$hotkey
+            .dropFirst()
+            .sink { [weak self] preset in self?.registerHotkey(preset) }
+        Log.app.notice("Pico launched; accessibility trusted: \(SelectionService.isAccessibilityTrusted())")
         if !SelectionService.isAccessibilityTrusted() {
             SelectionService.requestAccessibility()
         }
@@ -57,7 +59,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Actions
 
+    private func registerHotkey(_ preset: Settings.HotkeyPreset) {
+        hotKey = nil // unregister the previous one first
+        hotKey = HotKey(keyCode: preset.keyCode, modifiers: preset.modifiers) { [weak self] in
+            self?.trigger()
+        }
+        statusItem.menu?.item(at: 0)?.title = "Pico on selected text (\(preset.label))"
+    }
+
     private func trigger() {
+        Log.app.notice("Triggered")
         Task { await popup.show() }
     }
 

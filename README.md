@@ -2,7 +2,7 @@
 
 A tiny popup for the text you select, in any Mac app. Fix it, translate it, make it formal, or flip Hinglish / Tenglish / Tanglish between English letters and native script, with one shortcut.
 
-Select text → **⌥ Space** → pick an action → **⏎** replaces it in place.
+Select text → **⌃⌥ Space** → pick an action → **⏎** replaces it in place.
 
 - Works everywhere: WhatsApp Web, Mail, Slack, Notion, VS Code, Safari…
 - Built for Indian languages: understands romanized Hindi, Marathi, Telugu, Tamil, Kannada and more, and keeps them romanized unless you ask to change script
@@ -61,7 +61,7 @@ Pushing a tag like `v0.1.0` runs the same steps in GitHub Actions and attaches t
 
 ## How it works
 
-- `HotKey.swift`: global ⌥ Space via the Carbon hotkey API
+- `HotKey.swift`: global ⌃⌥ Space via the Carbon hotkey API
 - `SelectionService.swift`: reads the selection through the Accessibility API, falling back to a simulated ⌘C; replaces via Accessibility or a simulated ⌘V, restoring your clipboard
 - `ClaudeClient.swift`: streams from the Claude Messages API with your key
 - `Actions.swift`: the built-in actions and the shared system prompt

@@ -43,7 +43,12 @@ struct SettingsView: View {
             }
 
             Section("General") {
-                LabeledContent("Shortcut", value: "⌥ Space")
+                Picker("Shortcut", selection: $settings.hotkey) {
+                    ForEach(Settings.HotkeyPreset.allCases) { Text($0.label).tag($0) }
+                }
+                Text("Raycast and Alfred use ⌥ Space by default; pick another one if Pico doesn't open.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
                 HStack {
                     Text(SelectionService.isAccessibilityTrusted() ? "Accessibility: allowed" : "Accessibility: not allowed")

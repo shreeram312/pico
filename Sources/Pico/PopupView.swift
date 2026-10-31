@@ -30,7 +30,7 @@ struct PopupView: View {
     private var noSelection: some View {
         VStack(spacing: 6) {
             Image(systemName: "text.cursor").font(.title2).foregroundStyle(.secondary)
-            Text("Select some text first, then press ⌥ Space.")
+            Text("Select some text first, then press \(Settings.shared.hotkey.label).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
