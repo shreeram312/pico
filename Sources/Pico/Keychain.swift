@@ -14,6 +14,15 @@ enum Keychain {
         ]
     }
 
+    /// Whether a key is stored, without reading it (reading can prompt for the keychain password).
+    static func hasAPIKey() -> Bool {
+        var query = query
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        return SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess
+    }
+
     static func apiKey() -> String? {
         var query = query
         query[kSecReturnData as String] = true

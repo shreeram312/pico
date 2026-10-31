@@ -17,11 +17,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .dropFirst()
             .sink { [weak self] preset in self?.registerHotkey(preset) }
         Log.app.notice("Pico launched; accessibility trusted: \(SelectionService.isAccessibilityTrusted())")
+        // Until setup is complete, open Settings so a first launch always shows something
+        // (menu bar icons can be hidden behind the notch).
+        if !SelectionService.isAccessibilityTrusted() || !Keychain.hasAPIKey() {
+            showSettings()
+        }
         if !SelectionService.isAccessibilityTrusted() {
             SelectionService.requestAccessibility()
-        }
-        if Keychain.apiKey() == nil {
-            showSettings()
         }
     }
 
