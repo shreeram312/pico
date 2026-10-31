@@ -5,10 +5,10 @@ cask "pico" do
   version "0.1.0"
   sha256 "REPLACE_WITH_SHA256_FROM_RELEASE"
 
-  url "https://github.com/GITHUB_USER/pico/releases/download/v#{version}/Pico-#{version}.dmg"
+  url "https://github.com/shreeram312/pico/releases/download/v#{version}/Pico-#{version}.dmg"
   name "Pico"
   desc "Tiny AI popup for selected text: fix, translate and flip scripts for Indian languages"
-  homepage "https://github.com/GITHUB_USER/pico"
+  homepage "https://github.com/shreeram312/pico"
 
   depends_on macos: ">= :sonoma"
 
