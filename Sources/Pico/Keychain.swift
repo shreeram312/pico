@@ -1,30 +1,29 @@
 import Foundation
 import Security
 
-/// The API key is stored only in the user's login Keychain, encrypted by macOS.
+/// API keys are stored only in the user's login Keychain, encrypted by macOS, one item per provider.
 enum Keychain {
     private static let service = "app.pico.mac"
-    private static let account = "anthropic-api-key"
 
-    private static var query: [String: Any] {
+    private static func query(for provider: Provider) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: "\(provider.rawValue)-api-key",
         ]
     }
 
     /// Whether a key is stored, without reading it (reading can prompt for the keychain password).
-    static func hasAPIKey() -> Bool {
-        var query = query
+    static func hasAPIKey(for provider: Provider) -> Bool {
+        var query = query(for: provider)
         query[kSecReturnAttributes as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         return SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess
     }
 
-    static func apiKey() -> String? {
-        var query = query
+    static func apiKey(for provider: Provider) -> String? {
+        var query = query(for: provider)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
@@ -36,20 +35,18 @@ enum Keychain {
         return key
     }
 
-    static func setAPIKey(_ key: String) {
+    static func setAPIKey(_ key: String, for provider: Provider) {
+        let query = query(for: provider)
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            SecItemDelete(query as CFDictionary)
-            return
-        }
         // Delete + add rather than update: a fresh item is owned by the current build of the app,
         // so a rebuilt (re-signed) Pico can read it without macOS asking for the keychain password.
         SecItemDelete(query as CFDictionary)
+        guard !trimmed.isEmpty else { return }
         var insert = query
         insert[kSecValueData as String] = Data(trimmed.utf8)
         let status = SecItemAdd(insert as CFDictionary, nil)
         if status != errSecSuccess {
-            Log.app.error("Keychain save failed: OSStatus \(status)")
+            Log.app.error("Keychain save failed for \(provider.rawValue): OSStatus \(status)")
         }
     }
 }

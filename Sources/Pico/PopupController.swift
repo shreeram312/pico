@@ -39,8 +39,11 @@ final class PopupModel: ObservableObject {
     }
 
     func run(_ action: Action) {
-        guard let apiKey = Keychain.apiKey() else {
-            error = ClaudeClient.ClaudeError.noAPIKey.localizedDescription
+        let client: LLMClient
+        do {
+            client = try LLM.makeClient(settings: Settings.shared)
+        } catch {
+            self.error = error.localizedDescription
             return
         }
         self.action = action
@@ -48,7 +51,6 @@ final class PopupModel: ObservableObject {
         error = nil
         phase = .running
 
-        let client = ClaudeClient(apiKey: apiKey, model: Settings.shared.model)
         let message = Actions.userMessage(for: action, text: text, settings: Settings.shared)
         task?.cancel()
         task = Task {

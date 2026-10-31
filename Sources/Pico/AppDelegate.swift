@@ -19,7 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.app.notice("Pico launched; accessibility trusted: \(SelectionService.isAccessibilityTrusted())")
         // Until setup is complete, open Settings so a first launch always shows something
         // (menu bar icons can be hidden behind the notch).
-        if !SelectionService.isAccessibilityTrusted() || !Keychain.hasAPIKey() {
+        let provider = Settings.shared.provider
+        if !SelectionService.isAccessibilityTrusted() || (provider.needsKey && !Keychain.hasAPIKey(for: provider)) {
             showSettings()
         }
         if !SelectionService.isAccessibilityTrusted() {
@@ -77,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showSettings() {
         if settingsWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 480, height: 520),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false

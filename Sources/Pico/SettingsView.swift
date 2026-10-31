@@ -3,28 +3,38 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var settings = Settings.shared
-    // Don't read the key itself here (that can prompt for the keychain password); only whether one exists.
-    @State private var storedKey = Keychain.hasAPIKey() ? "•••••" : ""
-    @State private var apiKey = ""
-    @State private var saved = false
 
     var body: some View {
         Form {
-            Section("Anthropic API key") {
-                SecureField(storedKey.isEmpty ? "sk-ant-…" : "Key saved. Paste a new one to replace it.", text: $apiKey)
-                    .onSubmit(saveKey)
-                HStack {
-                    Button("Save") { saveKey() }
-                        .disabled(apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
-                    if saved {
-                        Text("Saved to Keychain").foregroundStyle(.secondary)
-                    } else if !storedKey.isEmpty {
-                        Text("A key is saved").foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Link("Get a key", destination: URL(string: "https://platform.claude.com/settings/keys")!)
+            Section("AI provider") {
+                Picker("Provider", selection: $settings.provider) {
+                    ForEach(Provider.allCases) { Text($0.name).tag($0) }
                 }
-                Text("Stored only in your Mac's Keychain. Requests go directly to Anthropic; Pico has no server.")
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                if settings.provider.needsKey {
+                    APIKeyField(provider: settings.provider)
+                        .id(settings.provider) // reset the field when switching providers
+                } else {
+                    TextField("Base URL", text: $settings.customBaseURL, prompt: Text("http://localhost:11434/v1"))
+                    Text("Any OpenAI-compatible server: Ollama, LM Studio, vLLM, OpenRouter…")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    TextField("Model", text: modelBinding)
+                        .font(.body.monospaced())
+                    Menu("Presets") {
+                        ForEach(settings.provider.models, id: \.id) { preset in
+                            Button(preset.name) { settings.model = preset.id }
+                        }
+                    }
+                    .fixedSize()
+                }
+
+                Text("Keys are stored only in your Mac's Keychain. Requests go directly to the provider; Pico has no server.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -40,12 +50,6 @@ struct SettingsView: View {
                 Text("Used by “To my language” and “Explain”.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-            }
-
-            Section("Model") {
-                Picker("Model", selection: $settings.model) {
-                    ForEach(Settings.models, id: \.id) { Text($0.name).tag($0.id) }
-                }
             }
 
             Section("General") {
@@ -79,14 +83,11 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 520)
+        .frame(width: 500, height: 600)
     }
 
-    private func saveKey() {
-        Keychain.setAPIKey(apiKey)
-        storedKey = "•••••"
-        apiKey = ""
-        saved = true
+    private var modelBinding: Binding<String> {
+        Binding(get: { settings.model }, set: { settings.model = $0 })
     }
 
     private func revealCustomActions() {
@@ -101,5 +102,44 @@ struct SettingsView: View {
             try? encoder.encode(example).write(to: url)
         }
         NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+}
+
+/// API key entry for one provider. Never reads the key itself (that can prompt for the keychain
+/// password); only whether one exists.
+private struct APIKeyField: View {
+    let provider: Provider
+    @State private var hasKey: Bool
+    @State private var input = ""
+    @State private var saved = false
+
+    init(provider: Provider) {
+        self.provider = provider
+        _hasKey = State(initialValue: Keychain.hasAPIKey(for: provider))
+    }
+
+    var body: some View {
+        SecureField("API key", text: $input, prompt: Text(hasKey ? "Key saved. Paste a new one to replace it." : "Paste your \(provider.name) API key"))
+            .onSubmit(save)
+        HStack {
+            Button("Save") { save() }
+                .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
+            if saved {
+                Text("Saved to Keychain").foregroundStyle(.secondary)
+            } else if hasKey {
+                Text("A key is saved").foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let url = provider.keyURL {
+                Link("Get a key", destination: url)
+            }
+        }
+    }
+
+    private func save() {
+        Keychain.setAPIKey(input, for: provider)
+        hasKey = true
+        input = ""
+        saved = true
     }
 }

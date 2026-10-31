@@ -24,6 +24,6 @@ Accessibility permission is granted per app bundle path, so always run from `bui
 ## Rules
 
 - Zero third-party dependencies unless there is a strong reason; keep the binary tiny.
-- The Claude API is called over raw HTTP (`ClaudeClient.swift`); no SDK exists for Swift. Never embed an API key; users bring their own, stored in the Keychain.
+- Providers are called over raw HTTP: `ClaudeClient.swift` (native Messages API) and `OpenAICompatibleClient` in `LLMClient.swift` (OpenAI, xAI, Gemini, local servers). Add a provider in `Provider.swift`. Never embed an API key; users bring their own, stored in the Keychain per provider.
 - Pico must never activate itself or steal focus from the target app: the popup is a `.nonactivatingPanel`.
 - Prompts live in `Actions.swift`. Romanized Indian languages stay romanized unless an action asks to change script.
