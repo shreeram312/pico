@@ -1,0 +1,41 @@
+# Builds a universal, ad-hoc-signed DMG and attaches it to the GitHub release for every `v*` tag.
+#
+#   git tag v0.1.0 && git push --tags
+#
+# To ship notarized builds later: add DEVELOPER_ID_CERT_P12 / DEVELOPER_ID_CERT_PASSWORD /
+# APPLE_ID / APPLE_TEAM_ID / APPLE_APP_PASSWORD secrets, import the certificate, set
+# CODESIGN_IDENTITY, and add an `xcrun notarytool submit --wait` + `xcrun stapler staple` step.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build app
+        run: scripts/build-app.sh "${{ steps.version.outputs.version }}"
+
+      - name: Make DMG
+        run: scripts/make-dmg.sh "${{ steps.version.outputs.version }}" | tee build/sha256.txt
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/Pico-${{ steps.version.outputs.version }}.dmg
+            build/sha256.txt
+          generate_release_notes: true
