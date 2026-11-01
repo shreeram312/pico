@@ -56,7 +56,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func menuSettings() { showSettings() }
 
     @objc private func menuAccessibility() {
-        SelectionService.requestAccessibility()
         SelectionService.openAccessibilitySettings()
     }
 

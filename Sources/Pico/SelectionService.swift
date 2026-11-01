@@ -21,7 +21,16 @@ enum SelectionService {
 
     static func isAccessibilityTrusted() -> Bool { AXIsProcessTrusted() }
 
+    private static var promptedThisLaunch = false
+
+    /// Shows macOS's own "would like to control this computer" dialog, once per launch. Asking
+    /// again stacks another copy of the dialog, so later calls only open the Settings pane.
     static func requestAccessibility() {
+        guard !promptedThisLaunch else {
+            openAccessibilitySettings()
+            return
+        }
+        promptedThisLaunch = true
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
     }

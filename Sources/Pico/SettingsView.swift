@@ -70,7 +70,6 @@ struct SettingsView: View {
                     Spacer()
                     if !accessibilityTrusted {
                         Button("Open System Settings") {
-                            SelectionService.requestAccessibility()
                             SelectionService.openAccessibilitySettings()
                         }
                     }

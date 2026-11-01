@@ -33,7 +33,6 @@ final class PopupModel: ObservableObject {
     }
 
     func openAccessibilitySettings() {
-        SelectionService.requestAccessibility()
         SelectionService.openAccessibilitySettings()
         onClose()
     }
