@@ -67,7 +67,11 @@ enum Provider: String, CaseIterable, Identifiable, Codable {
                 ("gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite — cheapest"),
             ]
         case .custom:
-            return [("llama3.2", "e.g. llama3.2 (Ollama)")]
+            return [
+                ("gemma3:4b", "Gemma 3 4B (Ollama) — good with Indic languages"),
+                ("qwen3:8b", "Qwen 3 8B (Ollama) — better, needs 16 GB"),
+                ("llama3.2", "Llama 3.2 (Ollama) — small, English-first"),
+            ]
         }
     }
 

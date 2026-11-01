@@ -32,5 +32,11 @@
 	<string>MIT License</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Local model servers (Ollama, LM Studio) speak plain HTTP on localhost. -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

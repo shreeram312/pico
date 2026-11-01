@@ -68,6 +68,11 @@ struct OpenAICompatibleClient: LLMClient {
                 do {
                     try await run(system: system, user: user) { continuation.yield($0) }
                     continuation.finish()
+                } catch let error as URLError where error.code == .cannotConnectToHost || error.code == .cannotFindHost {
+                    let host = endpoint.host ?? endpoint.absoluteString
+                    let port = endpoint.port.map { ":\($0)" } ?? ""
+                    continuation.finish(throwing: LLMError.stream(
+                        "Nothing is listening at \(host)\(port). Start your local model server first (for Ollama: `brew install ollama`, then `ollama pull gemma3:4b`), or pick another provider in Settings."))
                 } catch {
                     continuation.finish(throwing: error)
                 }

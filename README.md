@@ -25,7 +25,7 @@ Select text → **⌃⌥ Space** → pick an action → **⏎** replaces it in p
 | OpenAI         | `gpt-6.1-sol`      | Chat completions                                                                                            |
 | Grok (xAI)     | `grok-4.7`         | OpenAI-compatible endpoint                                                                                  |
 | Gemini         | `gemini-3.8-flash` | Google's OpenAI-compatible endpoint                                                                         |
-| Custom / local | any                | Any OpenAI-compatible base URL, e.g. `http://localhost:11434/v1` for Ollama (no key needed). Fully offline. |
+| Custom / local | `gemma3:4b`        | Any OpenAI-compatible base URL, e.g. `http://localhost:11434/v1` for Ollama (no key needed). Fully offline. You run the model server yourself: `brew install ollama && brew services start ollama && ollama pull gemma3:4b`. Gemma 3 and Qwen 3 handle Indic languages far better than Llama. |
 
 The model field accepts any model id, so new models work without an app update.
 
